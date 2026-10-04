@@ -51,7 +51,7 @@ def _dhash(path: Path, size: int = 8) -> str | None:
 
 def _hamming(a: str, b: str) -> int:
     try:
-        return bin(int(a, 16) ^ int(b, 16)).count("1")
+        return (int(a, 16) ^ int(b, 16)).bit_count()
     except ValueError:
         return 64
 
@@ -101,7 +101,10 @@ def _assess(path: Path, size: int = 8) -> tuple[str, str, str | None]:
         if var < 12.0:
             return "low_quality", "flat/low-detail", None
         small = g.resize((size + 1, size), Image.BILINEAR)
-        px = list(small.getdata())
+        if hasattr(small, "get_flattened_data"):
+            px = list(small.get_flattened_data())
+        else:
+            px = list(small.getdata())
         bits = 0
         for r in range(size):
             for c in range(size):
@@ -211,7 +214,7 @@ def audit_and_split(near_hamming: int = NEAR_HAMMING) -> dict:
                 if key in seen_pairs:
                     continue
                 seen_pairs.add(key)
-                if bin(hint[i] ^ hint[j]).count("1") <= near_hamming:
+                if (hint[i] ^ hint[j]).bit_count() <= near_hamming:
                     uf.union(i, j)
     groups: dict[int, list[int]] = defaultdict(list)
     for i in range(len(candidates)):

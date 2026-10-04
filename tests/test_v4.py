@@ -70,6 +70,7 @@ def test_version_ledger_semantics():
     """Finalized versions are sequential vN; ingest snapshots are staging and
     never claim a vN number (regression: ingest once auto-minted 'v4')."""
     import re
+
     from ml import dataset_registry as reg
     versions = reg.load_versions()
     finalized = [v for v in versions if v.get('kind', 'finalized') == 'finalized']

@@ -15,7 +15,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from ml import data, dataset_registry as reg
+from ml import data
+from ml import dataset_registry as reg
 
 ALLOWED_EXT = set(data.EXTS)
 NEAR_HAMMING = 4

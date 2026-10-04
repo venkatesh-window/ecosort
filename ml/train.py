@@ -18,8 +18,8 @@ from collections import Counter
 from pathlib import Path
 
 import torch
-import torch.nn as nn
 from PIL import Image
+from torch import nn
 from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 from torchvision import transforms
 

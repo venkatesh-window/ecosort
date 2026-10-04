@@ -6,7 +6,6 @@ robot safety interlocks. All expectations are structural (status codes,
 state transitions), never invented model-quality numbers.
 """
 
-import io
 import json
 import os
 
@@ -104,9 +103,9 @@ def test_al_review_unknown_scan_404(api):
 
 
 def test_candidates_never_touch_test_split(api):
-    before = json.loads(open(config.SPLITS_DIR / 'test.json').read())
+    before = json.loads((config.SPLITS_DIR / 'test.json').read_text())
     cands = api.get('/api/dataset/candidates?limit=500').json()['candidates']
-    after = json.loads(open(config.SPLITS_DIR / 'test.json').read())
+    after = json.loads((config.SPLITS_DIR / 'test.json').read_text())
     assert before == after, 'candidate flow must not mutate the frozen test manifest'
     assert all(c['source'] == 'review' and c['status'] == 'verified' for c in cands)
 

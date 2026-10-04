@@ -23,7 +23,8 @@ from pathlib import Path
 
 from PIL import Image
 
-from ml import config, data, dataset_registry as reg
+from ml import config, data
+from ml import dataset_registry as reg
 
 EXTS = set(data.EXTS)
 MIN_SIDE = data.MIN_SIDE

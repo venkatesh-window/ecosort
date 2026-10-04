@@ -100,8 +100,8 @@ def activation_centroid(cam: np.ndarray) -> dict:
     return {
         "x_norm": round(cx / max(w - 1, 1), 4),
         "y_norm": round(cy / max(h - 1, 1), 4),
-        "x_px": int(round(cx)),
-        "y_px": int(round(cy)),
+        "x_px": round(cx),
+        "y_px": round(cy),
         "concentration": round(concentration, 4),
         "source": "gradcam_activation_centroid",
     }

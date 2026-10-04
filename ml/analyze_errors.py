@@ -56,7 +56,7 @@ def analyze(run_id: str, weights: str = 'best') -> dict:
 
     # High/low-confidence errors from stored misclassified examples.
     hi, lo = [], []
-    for key, items in ev.get('misclassified_examples', {}).items():
+    for items in ev.get('misclassified_examples', {}).values():
         for it in items:
             rec = {'true_class': it['true_class'], 'predicted_class': it['predicted_class'],
                    'confidence': it['confidence'], 'true_confidence': it.get('true_confidence'),

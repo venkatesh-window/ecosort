@@ -23,7 +23,8 @@ import shutil
 from pathlib import Path
 
 from api import db
-from ml import config, data, dataset_registry as reg, quality_gates
+from ml import config, data, quality_gates
+from ml import dataset_registry as reg
 
 MIN_NEW_SAMPLES = 200
 MIN_CLASSES = 2

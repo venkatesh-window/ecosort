@@ -11,9 +11,9 @@ import sys
 import threading
 import time
 from pathlib import Path
-from typing import Optional
 
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -29,7 +29,24 @@ from ml.infer import DEVICE, Predictor, resolve_checkpoint
 ROOT = config.ROOT
 WEB_DIST = ROOT / "web" / "dist"
 
-app = FastAPI(title="EcoSort API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    db.init_db()
+    runtime_config.load()
+    ROBOT.sync_config()
+    ckpt = resolve_checkpoint()
+    if ckpt:
+        try:
+            predictor.load(ckpt)
+            ROBOT._model_loaded = True
+            print(f"model loaded: {ckpt}")
+        except Exception as exc:
+            print(f"model not loaded at startup: {exc}")
+    else:
+        print("no checkpoint found - API will run in untrained mode")
+    yield
+
+app = FastAPI(title="EcoSort API", version="0.1.0", lifespan=lifespan)
 
 
 def _allowed_origins() -> list[str]:
@@ -87,21 +104,7 @@ def ensure_model(force: bool = False) -> Predictor:
         return predictor
 
 
-@app.on_event("startup")
-def _startup() -> None:
-    db.init_db()
-    runtime_config.load()
-    ROBOT.sync_config()
-    ckpt = resolve_checkpoint()
-    if ckpt:
-        try:
-            predictor.load(ckpt)
-            ROBOT._model_loaded = True
-            print(f"model loaded: {ckpt}")
-        except Exception as exc:  # checkpoint may be mid-write during training
-            print(f"model not loaded at startup: {exc}")
-    else:
-        print("no checkpoint found - API will run in untrained mode")
+
 
 
 @app.get("/api/health")
@@ -164,7 +167,7 @@ def model_status() -> dict:
 
 
 @app.post("/api/model/reload")
-def model_reload(run_id: Optional[str] = None, weights: str = "best.pt") -> dict:
+def model_reload(run_id: str | None = None, weights: str = "best.pt") -> dict:
     ckpt = resolve_checkpoint(run_id, weights)
     if ckpt is None:
         raise HTTPException(404, "checkpoint not found")
@@ -185,7 +188,7 @@ class PredictResponse(BaseModel):
     scan_id: str
 
 
-def _run_prediction(pil: Image.Image, source: str, image_path: Optional[str], save: bool):
+def _run_prediction(pil: Image.Image, source: str, image_path: str | None, save: bool):
     p = ensure_model()
     result = p.predict(pil)
     scan_id = None
@@ -234,8 +237,8 @@ async def predict(file: UploadFile = File(...), source: str = "upload", save: bo
 @app.get("/api/scans")
 def scans(
     limit: int = Query(100, ge=1, le=500),
-    cls: Optional[str] = None,
-    state: Optional[str] = None,
+    cls: str | None = None,
+    state: str | None = None,
 ) -> dict:
     rows = db.list_scans(limit=limit, cls=cls, state=state)
     return {"count": len(rows), "scans": rows, "classes": config.CLASSES}
@@ -308,7 +311,7 @@ def scan_image(scan_id: str) -> FileResponse:
 
 class Feedback(BaseModel):
     correct: bool
-    correct_class: Optional[str] = None
+    correct_class: str | None = None
     source: str = "user"
 
 
@@ -567,7 +570,7 @@ class TrainRequest(BaseModel):
     batch_size: int = 32
     lr_head: float = 1e-3
     lr_finetune: float = 1e-4
-    resume: Optional[str] = None
+    resume: str | None = None
 
 
 @app.post("/api/training/start")
@@ -712,13 +715,13 @@ def models_error_analysis(run_id: str = "run-002") -> dict:
 @app.get("/api/predictions")
 def predictions(
     limit: int = Query(200, ge=1, le=500),
-    model: Optional[str] = None,
-    cls: Optional[str] = None,
-    min_conf: Optional[float] = None,
-    max_conf: Optional[float] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    feedback: Optional[str] = None,
+    model: str | None = None,
+    cls: str | None = None,
+    min_conf: float | None = None,
+    max_conf: float | None = None,
+    date_from: str | None = None,
+    date_to: str | None = None,
+    feedback: str | None = None,
 ) -> dict:
     rows = db.query_predictions(limit, model, cls, min_conf, max_conf,
                                 date_from, date_to, feedback)
@@ -749,7 +752,7 @@ def active_learning_stats() -> dict:
 class ReviewAction(BaseModel):
     scan_id: str
     action: str  # accept | correct | reject | uncertain
-    correct_class: Optional[str] = None
+    correct_class: str | None = None
 
 
 @app.post("/api/active-learning/review")
@@ -879,8 +882,8 @@ def robot_config_get() -> dict:
 
 
 class ThresholdUpdate(BaseModel):
-    confidence_threshold: Optional[float] = None
-    margin_threshold: Optional[float] = None
+    confidence_threshold: float | None = None
+    margin_threshold: float | None = None
 
 
 @app.put("/api/robot/config")
@@ -906,7 +909,7 @@ def robot_capabilities() -> dict:
 
 
 @app.post("/api/robot/sort")
-async def robot_sort(file: UploadFile = File(...)) -> dict:
+async def robot_sort(file: UploadFile = File(...)) -> dict:  # noqa: B008
     """Real end-to-end sorting command: upload -> inference -> gated decision.
 
     The returned `command` block is the payload a physical controller would
@@ -1069,7 +1072,7 @@ def robot_compatibility() -> dict:
 
 
 @app.post("/api/robot/predict")
-async def robot_predict(file: UploadFile = File(...)) -> dict:
+async def robot_predict(file: UploadFile = File(...)) -> dict:  # noqa: B008
     """Classify one image for the robot pipeline without issuing a motion command.
 
     Always marked simulation:true - perception only, no actuation path here.
@@ -1105,9 +1108,9 @@ def robot_stop() -> dict:
 
 
 class RobotFeedback(BaseModel):
-    scan_id: Optional[str] = None
+    scan_id: str | None = None
     correct: bool = True
-    correct_class: Optional[str] = None
+    correct_class: str | None = None
 
 
 @app.post("/api/robot/feedback")

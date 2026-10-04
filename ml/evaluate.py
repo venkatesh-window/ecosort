@@ -129,7 +129,7 @@ def run_evaluation(checkpoint: Path) -> dict:
 
     # Hardest confusion pairs by volume.
     confusion_pairs = []
-    for key, items in errors.items():
+    for key in errors:
         true_cls, pred_cls = key.split("__")
         ti, pi = config.CLASS_TO_IDX[true_cls], config.CLASS_TO_IDX[pred_cls]
         confusion_pairs.append(
@@ -147,7 +147,7 @@ def run_evaluation(checkpoint: Path) -> dict:
         "weights": checkpoint.name,
         "architecture": "efficientnet_b0",
         "split": "test",
-        "num_samples": int(len(yt)),
+        "num_samples": len(yt),
         "num_classes": config.NUM_CLASSES,
         "classes": config.CLASSES,
         "training_best_val_acc": state.get("best_val_acc"),

@@ -6,7 +6,6 @@ signals. All values are computed at request time - nothing is hardcoded.
 from __future__ import annotations
 
 import base64
-import io
 import time
 from pathlib import Path
 
@@ -22,7 +21,8 @@ from .gradcam import GradCAM, activation_centroid, colorize_cam, resize_cam
 from .model import build_model
 from .recycling import UNCERTAIN_TIPS, guidance
 
-def _pick_device() -> "torch.device":
+
+def _pick_device() -> torch.device:
     # device_count() matters: a driver can be present while no GPU is visible
     # (e.g. CUDA_VISIBLE_DEVICES=""), in which case cuda is unusable.
     if torch.cuda.is_available():
@@ -201,7 +201,7 @@ class Predictor:
         # Grad-CAM requires gradients, so it runs outside the no_grad block above.
         t3 = time.perf_counter()
         with GradCAM(self.model, DEVICE) as cam:
-            cam_map, cam_class = cam.generate(x, class_idx=best["index"])
+            cam_map, _cam_class = cam.generate(x, class_idx=best["index"])
         cam_resized = resize_cam(cam_map, config.IMAGE_SIZE)
         resized_original = np.array(
             pil.convert("RGB").resize((config.IMAGE_SIZE, config.IMAGE_SIZE), Image.BILINEAR)

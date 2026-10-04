@@ -15,7 +15,9 @@ from fastapi.testclient import TestClient
 from PIL import Image
 
 from api.main import app
-from ml import config, dataset_registry as reg, model_registry as mreg
+from ml import config
+from ml import dataset_registry as reg
+from ml import model_registry as mreg
 from ml.infer import Predictor, resolve_checkpoint
 
 

@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 ARTIFACTS = ROOT / "artifacts"
@@ -11,7 +11,7 @@ DB_PATH = ARTIFACTS / "ecosort.db"
 
 # Dataset location: ECOSORT_DATASET_ROOT wins (production/portable hosts);
 # falls back to the original development path.
-DATASET_ROOT = Path(os.environ.get("ECOSORT_DATASET_ROOT") or r"C:/Users/rakes/Downloads/archive")
+DATASET_ROOT = Path(os.environ.get("ECOSORT_DATASET_ROOT") or ROOT / "dataset")
 DATASET_VARIANT = "standardized_256"
 DATASET_DIR = DATASET_ROOT / DATASET_VARIANT
 

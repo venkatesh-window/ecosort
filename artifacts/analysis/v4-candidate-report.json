@@ -1,12 +1,27 @@
 {
   "parent_version": "EcoSort Dataset v3",
   "v3_size": 23172,
-  "working_size": 23335,
-  "considered": 2,
+  "working_size": 23172,
+  "considered": 5,
   "accepted": 1,
   "auto_rejected": [
     {
-      "candidate_id": "v4c-d74b40e8",
+      "candidate_id": "v4c-1b6fa23e",
+      "review_status": "REJECTED",
+      "reason": "exact duplicate check: md5 already in v3 or candidate pool"
+    },
+    {
+      "candidate_id": "v4c-6a20ec6e",
+      "review_status": "REJECTED",
+      "reason": "exact duplicate check: md5 already in v3 or candidate pool"
+    },
+    {
+      "candidate_id": "v4c-bb28d309",
+      "review_status": "REJECTED",
+      "reason": "exact duplicate check: md5 already in v3 or candidate pool"
+    },
+    {
+      "candidate_id": "v4c-c1291c57",
       "review_status": "REJECTED",
       "reason": "exact duplicate check: md5 already in v3 or candidate pool"
     }
